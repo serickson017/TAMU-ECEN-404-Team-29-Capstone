@@ -1,0 +1,147 @@
+#include "Particle.h"
+
+// Constants
+const unsigned long SEND_INTERVAL_MS = 2000;
+const size_t READ_BUF_SIZE = 256;
+
+// Structures
+typedef struct {
+  int temperature;
+  int humidity;
+  int soilmoisture;
+} WeatherData;
+
+
+//WeatherData USERINPUT;
+int tempVal(String Temp);
+int humindityVal(String humindity);
+int soilMoistureOne(String soilMoistureone);
+
+double number = 50;
+double numberone = 0;
+double numbertwo = 1000;
+
+
+// Forward declarations
+void processBuffer();
+void handleWeatherData(const WeatherData &data);
+
+// Global variables
+int counter = 0;
+unsigned long lastSend = 0;
+char sendBuf[256];
+
+char readBuf[READ_BUF_SIZE];
+size_t readBufOffset = 0;
+
+// report page
+char status[] = "{\"debug\":%s}" ;
+char results[] = "{\"temperature\":%.02f,\"humidity\":%.02f,\"soilmoisture\":%.02f}" ;
+char msg_st[sizeof(status) + 16];
+char msg_res[sizeof(results) + 32 ];
+
+unsigned long interval = 0;
+
+void setup() {
+	Serial.begin(9600);
+	Serial1.begin(19200);
+	
+	Particle.function("Temperature", tempVal);
+    Particle.function("Humindity", humindityVal);
+    Particle.function("SoilMoistureOne", soilMoistureOne);
+    
+    Particle.variable("number", number);
+    Particle.variable("numberone", numberone);
+    Particle.variable("numbertwo", numbertwo);
+    
+    Particle.variable("data", msg_res);
+}
+
+void loop() {
+	if (millis() - lastSend >= SEND_INTERVAL_MS) {
+		lastSend = millis();
+		
+		WeatherData send;
+          send.temperature = number;
+          send.humidity = numberone;
+          send.soilmoisture = numbertwo;
+
+    snprintf(sendBuf, sizeof(sendBuf), "%d,%d,%d\n",
+      send.temperature, send.humidity, send.soilmoisture);
+            Serial1.print(sendBuf);
+		    Serial.printlnf("Sent to MCU: temperature=%d humidity=%d soilmoisture=%d",
+		    send.temperature, send.humidity, send.soilmoisture);
+	}
+
+	// Read data from serial
+	while(Serial1.available()) {
+		if (readBufOffset < READ_BUF_SIZE) {
+			char c = Serial1.read();
+			if (c != '\n') {
+				// Add character to buffer
+				readBuf[readBufOffset++] = c;
+			}
+			else {
+				// End of line character found, process line
+				readBuf[readBufOffset] = 0;
+				processBuffer();
+				readBufOffset = 0;
+			}
+		}
+		else {
+			Serial.println("readBuf overflow, emptying buffer");
+			readBufOffset = 0;
+		}
+	}
+}
+
+int tempVal(String Temp) {
+    number = Temp.toInt();
+    return number;
+}
+int humindityVal(String humindity) {
+    numberone = humindity.toInt();
+    return numberone;
+}
+int soilMoistureOne(String soilMoistureone) {
+    numbertwo = soilMoistureone.toInt();
+    return numbertwo;
+}
+
+void processBuffer() {
+	WeatherData data;
+
+  if (sscanf(readBuf, "%d,%d,%d", &data.temperature, &data.humidity, &data.soilmoisture) == 3) {
+
+    handleWeatherData(data);
+    
+  }
+  else {
+      
+    Serial.printlnf("invalid data %s", readBuf);
+    
+  }
+}
+
+void handleWeatherData(const WeatherData &data) {
+  Serial.printlnf("FROM MCU temperature=%d humidity=%d soilmoisture=%d",
+      data.temperature, data.humidity, data.soilmoisture);
+      
+    //Particle.publish("temperature", String(data.temperature), 60, PRIVATE);
+    //Particle.publish("Humindity", String(data.humidity), 60, PRIVATE);
+    //Particle.publish("SoilMois", String(data.soilmoisture), 60, PRIVATE);
+    
+    double temperature;
+    double humidity;
+    double soilmoisture;
+    
+    if (millis() - interval > 1000) {
+        interval = millis();
+        temperature = data.temperature;
+        humidity = data.humidity;
+        soilmoisture = data.soilmoisture;
+        snprintf(msg_res, sizeof(msg_res), results,
+            temperature, humidity, soilmoisture);
+        Particle.publish("ALL_DATA", msg_res, 60, PRIVATE);
+    }
+}

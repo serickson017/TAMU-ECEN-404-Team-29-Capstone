@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+
+	<head>
+		<meta charset="UTF-8">
+		<title>Automated Greenhouse 1</title>
+		<link href="https://cdn.jsdelivr.net/npm/tailwindcss/dist/tailwind.min.css" rel="stylesheet">
+	</head>
+
+	<hr>
+		<nav>
+		<table cellspacing="5" cellpadding="5">
+		<tr>
+		<td><a href="home.html">Home</a></td>
+		<td><a href="Automated Greenhouse 1.html">Automated Greenhouse 1</a></td>
+		</tr>
+		</table>
+		</nav>
+	<hr>
+
+	<div class="text-6xl px-8 py-6">
+		Automated Greenhouse
+	</div>
+	<div class="text-3xl px-8 py-6">
+		This is the control page for the Automated Greenhouse. Below you will find controls to monitor the greenhouse sensors and set the desired environmental values as well as review current data values. 
+	</div>
+
+	<body>
+		<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+		<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+
+		<div id="tempV">
+			<label for="status" class="text-2xl py-6">Temperature</label>
+		    <input id="status" v-model="number" placeholder="Between 1C to 50C" oninput="temperature(this.value)" onchange="temperature(this.value)" class="border border-gray px-4 py-2 rounded-full" type="number" name="arg">
+		    <button v-on:click="submit" class="bg-black text-white px-4 py-2 rounded-full">Run</button>
+		   	<p>The temperature of the Automated Greenhouse needs to be at <span id="output"></span> C and the current temperature is <span id="temperature_value"></span> C</p>
+		</div>
+		<div id="HumindityV">
+		    <label for="status" class="text-2xl py-6">Humidity</label>
+		    <input id="status" v-model="number" placeholder="Between 1 to 100%" oninput="Humindity(this.value)" onchange="Humindity(this.value)" class="border border-gray px-4 py-2 rounded-full" type="number" name="arg">
+		    <button v-on:click="submit" class="bg-black text-white px-4 py-2 rounded-full">Run</button>
+		   	<p>The humidity of this Automated Greenhouse needs to be at <span id="output1"></span> % and the current Humidity is <span id="humidity_value"></span> %</p>
+		</div>
+
+		<div id="SoilMoV">
+		  	<label for="status" class="text-2xl py-6">Soil Moisture</label>
+	      	<input id="status" v-model="number" placeholder="Between 300 to 700%" oninput="soil(this.value)" onchange="soil(this.value)" class="border border-gray px-4 py-2 rounded-full" type="number" name="arg">
+		  	<button v-on:click="submit" class="bg-black text-white px-4 py-2 rounded-full">Run</button>
+		   	<p>The Soil Moisture of this Automated Greenhouse needs to be at <span id="output2"></span>  and the current soil moisture is <span id="soilmoisture_value"></span> </p>
+		</div>
+
+		<script>
+			var tempV = new Vue({
+	      		el: '#tempV',
+	      		data: {
+	      			lck: '',
+	      			number: 0
+	      		},
+	      		methods: {
+			        button(setTemp) {
+			        	this.lck = setTemp;
+			        },
+			        submit() {
+			        	console.log("this num", this.number);
+			        	this.doApi(Number(this.number))
+	        		},
+			        doApi(val) {
+			        	axios.post('https://api.particle.io/v1/devices/5700520005504b464d323520/Temperature?access_token=ad85738bccd711d7112ae42a9382f28e34e52879', {
+			            arg: val,
+			        	})
+			            .then(function (response) {
+			              console.log(response);
+			            })
+			            .catch(function (error) {
+			              console.log(error);
+			            });
+			        }
+	      		},
+				watch: {
+			        lck(val){
+			          	this.doApi(val);
+			        }
+			    }
+			})
+
+			var HumindityV = new Vue({
+	      		el: '#HumindityV',
+	      		data: {
+	      			lck: '',
+	      			number: 0
+	      		},
+	      		methods: {
+			        button(setHumindity) {
+			        	this.lck = setHumindity;
+			        },
+			        submit() {
+			        	console.log(this.number);
+			        	this.doApi(Number(this.number))
+	        		},
+			        doApi(val) {
+			        	axios.post('https://api.particle.io/v1/devices/5700520005504b464d323520/Humindity?access_token=ad85738bccd711d7112ae42a9382f28e34e52879', {
+			            arg: val,
+			          })
+			            .then(function (response) {
+			              console.log(response);
+			            })
+			            .catch(function (error) {
+			              console.log(error);
+			            });
+			        }
+	      		},
+			    watch: {
+			        lck(val){
+			          	this.doApi(val);
+			        }
+			    }
+			})
+
+			var SoilMoV = new Vue({
+		      		el: '#SoilMoV',
+		      		data: {
+		      			lck: '',
+		      			number: 0
+		      		},
+		      		methods: {
+				        button(setsoilMoisture) {
+				        	this.lck = setsoilMoisture;
+				        },
+				        submit() {
+				         	console.log(this.number);
+				          	this.doApi(Number(this.number))
+		        		},
+				        doApi(val) {
+				          	axios.post('https://api.particle.io/v1/devices/5700520005504b464d323520/SoilMoistureOne?access_token=ad85738bccd711d7112ae42a9382f28e34e52879', {
+				            arg: val,
+				          })
+				            .then(function (response) {
+				              console.log(response);
+				            })
+				            .catch(function (error) {
+				              console.log(error);
+				            });
+				        }
+		      		},
+				    watch: {
+				        lck(val){
+				        	this.doApi(val);
+				        }
+				    }
+			})
+
+			function temperature(valNum) {
+				if (valNum < 1) {
+		  			valNum = parseFloat(valNum);
+		  			document.getElementById("output").innerHTML="least 1";
+				} else if (valNum > 50) {
+					console.log("num is", valNum);
+					valNum = parseFloat(valNum);
+		 			document.getElementById("output").innerHTML="most 50";
+				} else {
+					valNum = parseFloat(valNum);
+		  			document.getElementById("output").innerHTML=valNum;
+				}
+			}
+
+			function Humindity(valNum) {
+				if (valNum < 1) {
+	  				valNum = parseFloat(valNum);
+	  				document.getElementById("output1").innerHTML="least 1";
+				} else if (valNum > 100) {
+					valNum = parseFloat(valNum);
+	  				document.getElementById("output1").innerHTML="most 100";
+				} else {
+					valNum = parseFloat(valNum);
+	  				document.getElementById("output1").innerHTML=valNum;
+				}
+			}
+			function soil(valNum) {
+				if (valNum < 300) {
+	  				valNum = parseFloat(valNum);
+	  				document.getElementById("output2").innerHTML="least 300";
+				} else if (valNum > 700) {
+					valNum = parseFloat(valNum);
+	  				document.getElementById("output2").innerHTML="most 700";
+				} else {
+					valNum = parseFloat(valNum);
+	  				document.getElementById("output2").innerHTML=valNum;
+				}
+			}
+		</script>
+	</body>
+<!-- The following is the report page that display data from Particle photon back to html -->
+	<head>
+		<meta charset="UTF-8">
+		<link href="https://cdn.jsdelivr.net/npm/tailwindcss/dist/tailwind.min.css" rel="stylesheet">
+	</head>
+<!--
+	<body>
+		<header>
+		<p style="color: black;">Temperature: <span id="temperature_value"></span></p>
+		<p style="color: black;">Humidity: <span id="humidity_value"></span></p>
+    	<p style="color: black;">soilmoisture: <span id="soilmoisture_value"></span></p>
+	</body>
+-->	<body>
+		<header>
+			<!--
+			<p style="color: black;">Temperaturemax: <span id="temperaturemax_value"></span></p>
+			<p style="color: black;">Temperaturemin: <span id="temperaturemin_value"></span></p>
+			-->
+	</body>
+	<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/particle-api-js@8/dist/particle.min.js"></script>
+	<script type="text/javascript">
+
+	//var accessToken = "6551bc5e93f500b5716a0e52b387acc51e670f7e"; 
+	var accessToken = "ad85738bccd711d7112ae42a9382f28e34e52879"; 
+	
+	var deviceID = "5700520005504b464d323520" 
+
+	var dane = 0; 
+	var VarName = "data";
+	var temperature_info = document.getElementById("temperature_value");
+	//var temperaturemax_info = document.getElementById("temperaturemax_value");
+	//var temperaturemin_info = document.getElementById("temperaturemin_value");
+	var humidity_info = document.getElementById("humidity_value");
+	var soilmoisture_info = document.getElementById("soilmoisture_value");
+
+	temperature_info.innerHTML = "...Waiting for temperature...";
+	//temperaturemax_info.innerHTML = "...Waiting for temperaturemax...";
+	//temperaturemin_info.innerHTML = "...Waiting for temperaturemin...";
+	humidity_info.innerHTML = "...Waiting for humidity...";
+	soilmoisture_info.innerHTML = "...Waiting for soilmoisture...";
+	var particle = new Particle();
+
+	setInterval(function() {
+
+		get_data();     
+	
+	}, 1000); 
+
+    function get_data(){
+         
+        particle.getVariable({ deviceId: deviceID , name: VarName, auth: accessToken }).then(
+
+        function(data){
+
+        	console.log('Device variable retrieved successfully:', JSON.parse(data.body.result));
+           	dane = JSON.parse(data.body.result);
+           	temperature_info.innerHTML = dane.temperature;
+           	//temperaturemax_info.innerHTML = dane.temperaturemax;
+           	//temperaturemin_info.innerHTML = dane.temperaturemin;
+           	humidity_info.innerHTML = dane.humidity;
+           	soilmoisture_info.innerHTML = dane.soilmoisture;
+                   
+        }, 
+        function(err) {
+           	console.log('An error occurred while getting attrs:', err);
+       });
+    }
+    </script>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
